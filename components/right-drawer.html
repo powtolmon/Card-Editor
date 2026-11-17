@@ -1,0 +1,177 @@
+<div class="drawer drawer-right" id="drawerRight">
+    <div class="drawer-header">
+        <div class="drawer-title">表单编辑</div>
+        <div class="drawer-menu" id="btn-close-form">&#10005;</div>
+    </div>
+
+    <div class="drawer-form-body">
+        <!-- 基础信息 -->
+        <div class="form-group">
+            <label>卡名</label>
+            <input type="text" data-key="cardName" placeholder="输入卡名" />
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>费用</label>
+                <input type="number" data-key="cost" placeholder="费用" />
+            </div>
+            <div class="form-group">
+                <label>阶级</label>
+                <input type="number" data-key="rank" placeholder="阶级" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>速度</label>
+                <input type="number" data-key="speed" placeholder="速度" />
+            </div>
+            <div class="form-group">
+                <label>生命</label>
+                <input type="number" data-key="life" placeholder="生命" />
+            </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0" />
+
+        <!-- 等级表 -->
+        <div class="form-group">
+            <label>等级表 (格式: 叠卡数-力量)</label>
+            <div class="form-row">
+                <div class="input-with-label">
+                    <span>lv1</span>
+                    <input type="text" data-key="lv1" />
+                </div>
+                <div class="input-with-label">
+                    <span>lv2</span>
+                    <input type="text" data-key="lv2" />
+                </div>
+                <div class="input-with-label">
+                    <span>lv3</span>
+                    <input type="text" data-key="lv3" />
+                </div>
+            </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0" />
+
+        <!-- 文本区 -->
+        <div class="form-group">
+            <label>怪兽效果</label>
+            <textarea
+                rows="5"
+                data-key="effects"
+                placeholder="输入效果文本..."
+            ></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>插件效果</label>
+            <textarea
+                rows="3"
+                data-key="plugin"
+                placeholder="输入插件效果..."
+            ></textarea>
+        </div>
+    </div>
+</div>
+
+<style>
+    .drawer-right {
+        right: 0;
+        transform: translateX(100%);
+    }
+    .drawer-right.open {
+        transform: translateX(0);
+    }
+
+    .drawer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+        background: #fafafa;
+    }
+    .drawer-title {
+        font-weight: bold;
+        font-size: 16px;
+    }
+    .drawer-menu {
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0 5px;
+    }
+
+    .drawer-form-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+        background: #fff;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 8px;
+        font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 15px;
+        font-family: inherit;
+        background: #f9f9f9;
+        outline: none;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+        border-color: #111;
+        background: #fff;
+    }
+
+    /* 让两个输入框并排 */
+    .form-row {
+        display: flex;
+        gap: 10px;
+    }
+    .form-row .form-group {
+        flex: 1;
+        margin-bottom: 15px;
+    }
+
+    /* 等级表专用的小输入框 */
+    .input-with-label {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding-left: 10px;
+    }
+    .input-with-label span {
+        font-size: 12px;
+        font-weight: bold;
+        color: #888;
+    }
+    .input-with-label input {
+        border: none;
+        background: transparent;
+        padding: 10px;
+        width: 100%;
+    }
+    .input-with-label:focus-within {
+        border-color: #111;
+        background: #fff;
+    }
+</style>

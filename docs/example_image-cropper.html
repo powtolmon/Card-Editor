@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+        />
+        <title>裁剪器 UI 测试 - 可缩放版</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                background: #111;
+                font-family: "PingFang SC", sans-serif;
+                overflow: hidden;
+                color: #fff;
+            }
+
+            /* ================= 弹窗全屏容器 ================= */
+            .cropper-modal {
+                position: fixed;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* ================= 1. 顶部栏 ================= */
+            .cropper-top-bar {
+                display: flex;
+                align-items: center;
+                height: 56px;
+                padding: 0 10px;
+                background: #1a1a1a;
+                border-bottom: 1px solid #333;
+                flex-shrink: 0;
+                z-index: 10;
+            }
+
+            .cropper-title {
+                flex: 1;
+                font-size: 15px;
+                color: #eee;
+                font-weight: 500;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                padding-right: 10px;
+            }
+
+            .cropper-tools {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+
+            .cropper-btn {
+                background: transparent;
+                color: #b0b0b0;
+                border: 1px solid #444;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .cropper-btn:active {
+                background: #333;
+                color: #fff;
+            }
+            .cropper-btn.active {
+                background: #4caf50;
+                color: #fff;
+                border-color: #4caf50;
+            }
+            .cropper-btn.primary {
+                background: #fff;
+                color: #111;
+                border-color: #fff;
+                font-weight: bold;
+            }
+            .cropper-btn.primary:active {
+                background: #ccc;
+            }
+            .cropper-divider {
+                width: 1px;
+                height: 24px;
+                background: #444;
+                margin: 0 4px;
+            }
+
+            /* ================= 2. 信息栏 ================= */
+            .cropper-info-bar {
+                background: #222;
+                padding: 10px 15px;
+                display: flex;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                font-size: 12px;
+                color: #aaa;
+                border-bottom: 1px solid #333;
+                flex-shrink: 0;
+                z-index: 10;
+            }
+            .info-item {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                margin: 2px 0;
+            }
+            .info-item strong {
+                color: #fff;
+                font-size: 13px;
+            }
+
+            /* ================= 3. 画布区 ================= */
+            .cropper-stage {
+                flex: 1;
+                position: relative;
+                overflow: hidden;
+                background: #000;
+                touch-action: none;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            /* 原图容器 */
+            .cropper-image-layer {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transform-origin: center center;
+            }
+            .cropper-image-layer img {
+                max-width: none;
+                max-height: none;
+                user-select: none;
+                -webkit-user-drag: none;
+                width: 100%; /* 初始填满 */
+            }
+
+            /* 透明窗 */
+            .cropper-window {
+                position: absolute;
+                /* 默认居中，JS 接管后改为绝对定位 */
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 250px;
+                height: 180px;
+                border: 1px solid #fff;
+                cursor: move;
+                box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+                background-image:
+                    linear-gradient(
+                        rgba(255, 255, 255, 0.15) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        90deg,
+                        rgba(255, 255, 255, 0.15) 1px,
+                        transparent 1px
+                    );
+                background-size: 33.33% 33.33%;
+            }
+            .cropper-window.selected {
+                border-color: #4caf50;
+            }
+
+            /* 四个角的控制点 */
+            .handle {
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                background: #4caf50;
+                border-radius: 50%;
+                border: 2px solid #fff;
+            }
+            .handle-tl {
+                top: -10px;
+                left: -10px;
+                cursor: nwse-resize;
+            }
+            .handle-tr {
+                top: -10px;
+                right: -10px;
+                cursor: nesw-resize;
+            }
+            .handle-bl {
+                bottom: -10px;
+                left: -10px;
+                cursor: nesw-resize;
+            }
+            .handle-br {
+                bottom: -10px;
+                right: -10px;
+                cursor: nwse-resize;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="cropper-modal">
+            <!-- 1. 顶部栏 -->
+            <div class="cropper-top-bar">
+                <div class="cropper-title" id="cropper-title">
+                    我的绝美卡图.png
+                </div>
+
+                <div class="cropper-tools">
+                    <button class="cropper-btn" id="btn-cropper-restore">
+                        还原
+                    </button>
+                    <button class="cropper-btn" id="btn-cropper-lock">
+                        固定
+                    </button>
+                    <div class="cropper-divider"></div>
+                    <button
+                        class="cropper-btn primary"
+                        id="btn-cropper-confirm"
+                    >
+                        确认
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. 信息栏 -->
+            <div class="cropper-info-bar">
+                <div class="info-item">
+                    <span>当前选中：</span>
+                    <strong id="info-layer-name" style="color: #4caf50"
+                        >透明窗</strong
+                    >
+                </div>
+                <div class="info-item">
+                    <span>当前比例：</span>
+                    <strong id="info-ratio-current">1.38</strong>
+                    <span id="info-px-current">(250x180)</span>
+                </div>
+                <div class="info-item">
+                    <span>原图缩放：</span>
+                    <strong id="info-img-scale">100%</strong>
+                </div>
+            </div>
+
+            <!-- 3. 裁剪画布区 -->
+            <div class="cropper-stage" id="cropperStage">
+                <!-- 原图 -->
+                <div class="cropper-image-layer" id="cropperImageLayer">
+                    <img
+                        id="cropperSourceImage"
+                        src="https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=1920&auto=format&fit=crop"
+                        alt="原图"
+                    />
+                </div>
+
+                <!-- 透明窗 -->
+                <div class="cropper-window selected" id="cropperWindow">
+                    <!-- 四个控制点 -->
+                    <div class="handle handle-tl" data-dir="tl"></div>
+                    <div class="handle handle-tr" data-dir="tr"></div>
+                    <div class="handle handle-bl" data-dir="bl"></div>
+                    <div class="handle handle-br" data-dir="br"></div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const btnLock = document.getElementById("btn-cropper-lock");
+            const btnRestore = document.getElementById("btn-cropper-restore");
+            const cropperWindow = document.getElementById("cropperWindow");
+            const infoPxCurrent = document.getElementById("info-px-current");
+            const infoRatioCurrent =
+                document.getElementById("info-ratio-current");
+            const imgLayer = document.getElementById("cropperImageLayer");
+            const infoImgScale = document.getElementById("info-img-scale");
+
+            let isLocked = false;
+
+            // ================= 1. 按钮交互 =================
+            btnLock.onclick = () => {
+                isLocked = !isLocked;
+                btnLock.classList.toggle("active");
+                btnLock.innerText = isLocked ? "已固定" : "固定";
+            };
+
+            btnRestore.onclick = () => {
+                // 还原透明窗
+                cropperWindow.style.width = "250px";
+                cropperWindow.style.height = "180px";
+                cropperWindow.style.left = "50%";
+                cropperWindow.style.top = "50%";
+                cropperWindow.style.transform = "translate(-50%, -50%)";
+                // 还原原图
+                imgLayer.style.transform = "scale(1)";
+                updateInfo();
+            };
+
+            btnConfirm.onclick = () => {
+                alert(
+                    `确认裁剪！\n当前窗口尺寸: ${cropperWindow.offsetWidth}x${cropperWindow.offsetHeight}`,
+                );
+            };
+
+            // ================= 2. 更新信息栏 =================
+            function updateInfo() {
+                const w = cropperWindow.offsetWidth;
+                const h = cropperWindow.offsetHeight;
+                infoPxCurrent.innerText = `(${w}x${h})`;
+                infoRatioCurrent.innerText = (w / h).toFixed(2);
+            }
+
+            // ================= 3. 拖拽透明窗 =================
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            cropperWindow.addEventListener("pointerdown", (e) => {
+                // 如果点的是四个角的把手，就不触发整体拖拽
+                if (e.target.classList.contains("handle")) return;
+
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+
+                const rect = cropperWindow.getBoundingClientRect();
+                const stageRect = document
+                    .getElementById("cropperStage")
+                    .getBoundingClientRect();
+
+                // 转换为相对舞台的左上角坐标
+                initialLeft = rect.left - stageRect.left;
+                initialTop = rect.top - stageRect.top;
+
+                cropperWindow.style.transform = "none"; // 移除 translate(-50%, -50%)
+                cropperWindow.style.left = initialLeft + "px";
+                cropperWindow.style.top = initialTop + "px";
+            });
+
+            window.addEventListener("pointermove", (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                cropperWindow.style.left = `${initialLeft + dx}px`;
+                cropperWindow.style.top = `${initialTop + dy}px`;
+            });
+
+            window.addEventListener("pointerup", () => {
+                isDragging = false;
+            });
+
+            // ================= 4. 拉伸透明窗（改变大小与比例） =================
+            let isResizing = false;
+            let resizeDir = "";
+            let startW, startH, startL, startT, startPointerX, startPointerY;
+
+            document.querySelectorAll(".handle").forEach((handle) => {
+                handle.addEventListener("pointerdown", (e) => {
+                    e.stopPropagation();
+                    isResizing = true;
+                    resizeDir = e.target.dataset.dir;
+                    startPointerX = e.clientX;
+                    startPointerY = e.clientY;
+
+                    startW = cropperWindow.offsetWidth;
+                    startH = cropperWindow.offsetHeight;
+
+                    // 获取当前窗口的左、上偏移
+                    const rect = cropperWindow.getBoundingClientRect();
+                    const stageRect = document
+                        .getElementById("cropperStage")
+                        .getBoundingClientRect();
+                    startL = rect.left - stageRect.left;
+                    startT = rect.top - stageRect.top;
+                });
+            });
+
+            window.addEventListener("pointermove", (e) => {
+                if (!isResizing) return;
+
+                const dx = e.clientX - startPointerX;
+                const dy = e.clientY - startPointerY;
+
+                let newW = startW;
+                let newH = startH;
+                let newL = startL;
+                let newT = startT;
+
+                if (isLocked) {
+                    // 🔥 如果是固定比例模式，根据横向拉伸的比例，自动算纵向高度
+                    const currentRatio = startW / startH;
+                    if (resizeDir === "br" || resizeDir === "bl") {
+                        newW = startW + (resizeDir === "br" ? dx : -dx);
+                        newH = newW / currentRatio;
+                        if (resizeDir === "bl") newL = startL + dx;
+                    } else if (resizeDir === "tr" || resizeDir === "tl") {
+                        newH = startH - (resizeDir === "tl" ? dy : -dy);
+                        newW = newH * currentRatio;
+                        if (resizeDir === "tl") {
+                            newL = startL + (startW - newW);
+                            newT = startT + dy;
+                        }
+                    }
+                } else {
+                    // 🔥 自由拉伸
+                    if (resizeDir === "br") {
+                        newW = startW + dx;
+                        newH = startH + dy;
+                    } else if (resizeDir === "bl") {
+                        newW = startW - dx;
+                        newH = startH + dy;
+                        newL = startL + dx;
+                    } else if (resizeDir === "tr") {
+                        newW = startW + dx;
+                        newH = startH - dy;
+                        newT = startT + dy;
+                    } else if (resizeDir === "tl") {
+                        newW = startW - dx;
+                        newH = startH - dy;
+                        newL = startL + dx;
+                        newT = startT + dy;
+                    }
+                }
+
+                // 防止宽高变成负数
+                if (newW > 30 && newH > 30) {
+                    cropperWindow.style.width = newW + "px";
+                    cropperWindow.style.height = newH + "px";
+                    cropperWindow.style.left = newL + "px";
+                    cropperWindow.style.top = newT + "px";
+                    updateInfo();
+                }
+            });
+
+            window.addEventListener("pointerup", () => {
+                isResizing = false;
+            });
+
+            // ================= 5. 双指缩放原图 =================
+            let initialDistance = 0;
+            let currentScale = 1;
+
+            const cropperStage = document.getElementById("cropperStage");
+
+            cropperStage.addEventListener("touchstart", (e) => {
+                if (e.touches.length === 2) {
+                    // 双指缩放
+                    initialDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY,
+                    );
+                }
+            });
+
+            cropperStage.addEventListener(
+                "touchmove",
+                (e) => {
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        const dist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY,
+                        );
+                        if (initialDistance > 0) {
+                            const factor = dist / initialDistance;
+                            const newScale = currentScale * factor;
+                            if (newScale > 0.5 && newScale < 5) {
+                                // 限制缩放范围
+                                imgLayer.style.transform = `scale(${newScale})`;
+                                infoImgScale.innerText = `${Math.round(newScale * 100)}%`;
+                            }
+                        }
+                    }
+                },
+                { passive: false },
+            );
+
+            cropperStage.addEventListener("touchend", (e) => {
+                if (e.touches.length < 2) {
+                    initialDistance = 0;
+                    // 记录当前的 scale，以便下一次双指缩放是基于这个比例
+                    const transformValue = imgLayer.style.transform;
+                    const match = transformValue.match(/scale\(([^)]+)\)/);
+                    if (match) {
+                        currentScale = parseFloat(match[1]);
+                    }
+                }
+            });
+
+            // 初始化信息栏
+            updateInfo();
+        </script>
+    </body>
+</html>

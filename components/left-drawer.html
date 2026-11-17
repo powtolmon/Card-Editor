@@ -1,0 +1,210 @@
+<div class="drawer drawer-left" id="drawerLeft">
+    <div class="left-drawer-header">
+        <div class="left-title">文件管理器</div>
+        <div id="left-toolbar-mount"></div>
+        <div class="context-menu" id="fileContextMenu"></div>
+    </div>
+
+    <div class="left-tabs">
+        <div class="left-tab active" id="tab-local">本地文件</div>
+        <div class="left-tab" id="tab-virtual">虚拟文件</div>
+    </div>
+
+    <div class="left-tree" id="treeContainer"></div>
+
+    <div
+        class="virtual-tree-wrapper"
+        id="virtualTreeWrapper"
+        style="display: none"
+    >
+        <!-- 草稿箱区域（手风琴） -->
+        <div class="temp-panel" id="tempPanel">
+            <!-- 分栏横条（可拖拽） -->
+            <div class="row splitter-row" id="tempHeader">
+                <span class="arrow open" id="tempArrow">▶</span>
+                <span class="icon">📥</span>
+                <span class="node-name">草稿箱 (temp)</span>
+            </div>
+            <div class="temp-content" id="tempContent"></div>
+        </div>
+
+        <!-- 用户文件树区域 -->
+        <div class="user-tree-container" id="userTreeContainer"></div>
+    </div>
+</div>
+
+<style>
+    /* ================= 抽屉基础样式 ================= */
+    .drawer-left {
+        left: 0;
+        transform: translateX(-100%);
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .drawer-left.open {
+        transform: translateX(0);
+    }
+    .left-drawer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: #fff;
+        position: relative;
+        z-index: 10;
+    }
+    .left-title {
+        font-weight: bold;
+        font-size: 16px;
+        color: #111;
+        flex: 1;
+    }
+    .left-tabs {
+        display: flex;
+        border-bottom: 1px solid #eee;
+        background: #fff;
+        flex-shrink: 0;
+    }
+    .left-tab {
+        flex: 1;
+        text-align: center;
+        padding: 12px 0;
+        font-size: 13px;
+        color: #888;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+    }
+    .left-tab.active {
+        color: #111;
+        font-weight: bold;
+        border-bottom-color: #111;
+    }
+
+    /* ================= 核心：无边框横条样式 ================= */
+    .row {
+        display: flex;
+        align-items: center;
+        height: 38px; /* 紧凑型高度 */
+        font-size: 14px;
+        color: #111;
+        cursor: pointer;
+        border: none;
+        background-color: transparent;
+        transition:
+            background-color 0.2s,
+            border-color 0.2s;
+        user-select: none;
+    }
+
+    /* 选中时的浅蓝背景 */
+    .row.selected {
+        background-color: #e3f2fd;
+        color: #005fb8;
+    }
+    /* 按下时的灰色反馈 */
+    .row:active {
+        background-color: #f0f0f0;
+    }
+
+    /* 紧凑的箭头和图标 */
+    .arrow {
+        font-size: 10px;
+        color: #999;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 14px; /* 缩小箭头占位 */
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+    }
+    .arrow.open {
+        transform: rotate(90deg);
+    }
+
+    .icon {
+        font-size: 14px;
+        display: inline-flex;
+        width: 18px; /* 缩小图标占位 */
+        flex-shrink: 0;
+        justify-content: center;
+    }
+
+    .node-name {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-left: 4px;
+    }
+
+    /* ================= 虚拟双栏特有样式 ================= */
+    .virtual-tree-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .temp-panel {
+        display: flex;
+        flex-direction: column;
+        height: 200px;
+        overflow: hidden;
+        transition: height 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    /* 🔥 草稿箱分栏横条 */
+    .splitter-row {
+        background-color: #fafafa;
+        border-top: 2px solid transparent;
+        border-bottom: 2px solid transparent;
+    }
+
+    /* 拖拽状态：只有上下边框变成蓝色 */
+    .splitter-row.dragging {
+        background-color: #fafafa;
+        border-top: 2px solid #005fb8;
+        border-bottom: 2px solid #005fb8;
+    }
+
+    .temp-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0;
+    }
+
+    /* 气泡菜单 */
+    .context-menu {
+        position: absolute;
+        top: 45px;
+        right: 15px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        display: none;
+        flex-direction: column;
+        min-width: 140px;
+        z-index: 999;
+        overflow: hidden;
+    }
+    .context-menu.show {
+        display: flex;
+    }
+    .context-item {
+        padding: 12px 16px;
+        font-size: 14px;
+        color: #333;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .context-item:active {
+        background: #f9f9f9;
+    }
+    .context-item.danger {
+        color: #d32f2f;
+    }
+</style>

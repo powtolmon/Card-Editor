@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+        />
+        <title>Card Editor - 完整组件化版</title>
+        <style>
+            /* ================= 基础重置 ================= */
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+                -webkit-tap-highlight-color: transparent;
+            }
+            body {
+                background: #222;
+                font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+                color: #111;
+                overflow: hidden;
+                height: 100vh;
+            }
+
+            /* ================= 1. TopBar (顶部栏) ================= */
+            .top-bar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 56px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0 10px;
+                z-index: 50;
+                background: #1a1a1a;
+                color: #fff;
+                border-bottom: 1px solid #333;
+            }
+            .icon-btn {
+                width: 44px;
+                height: 44px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 22px;
+                font-family: monospace;
+                cursor: pointer;
+                border-radius: 8px;
+                opacity: 0.8;
+            }
+            .icon-btn:active {
+                opacity: 1;
+                background: #333;
+            }
+            .title-text {
+                font-size: 15px;
+                font-weight: 500;
+                color: #aaa;
+                flex: 1;
+                text-align: center;
+            }
+            .right-tools {
+                display: flex;
+            }
+
+            /* ================= 2. Stage (主画布) ================= */
+            .stage {
+                width: 100vw;
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding-top: 56px;
+                transition: transform 0.3s ease;
+            }
+            body.drawer-open .stage {
+                transform: scale(0.95);
+                opacity: 0.3;
+            }
+
+            /* --- CardCanvas (卡面组件) --- */
+            .card {
+                width: 354px;
+                height: 516px;
+                background: #fff;
+                border-radius: 6px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+                position: relative;
+                transform-origin: center center;
+                user-select: none;
+                overflow: hidden;
+            }
+
+            /* 卡面内部可编辑样式（保留你之前的设置） */
+            [contenteditable="true"] {
+                outline: none;
+                cursor: text;
+                transition: background 0.2s;
+                border-radius: 4px;
+            }
+            [contenteditable="true"]:focus {
+                background: rgba(0, 0, 0, 0.06);
+                box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+            }
+
+            .name {
+                position: absolute;
+                top: 0;
+                left: 4.5%;
+                width: 91%;
+                height: 8%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid #111;
+                padding: 0 2%;
+                font-weight: 800;
+                font-size: 21px;
+            }
+            .name .title {
+                max-width: 75%;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+
+            .art {
+                position: absolute;
+                top: 8%;
+                left: 4.5%;
+                width: 91%;
+                height: 40%;
+                background: #f5f5f5;
+                border-bottom: 1px solid #111;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                overflow: hidden;
+            }
+            .art img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: none;
+            }
+            .art span {
+                color: #aaa;
+                font-size: 14px;
+                position: absolute;
+                z-index: 1;
+            }
+
+            .stats {
+                position: absolute;
+                top: 49.5%;
+                left: 4.5%;
+                width: 91%;
+                height: 6%;
+                display: flex;
+                justify-content: space-evenly;
+                align-items: center;
+                border: 1px solid #111;
+                border-radius: 6px;
+                background: #fcfcfc;
+                font-size: 13px;
+                color: #555;
+            }
+            .stats b {
+                font-size: 20px;
+                color: #111;
+                font-family: "Arial Black", sans-serif;
+                margin-left: 4px;
+            }
+
+            .mid {
+                position: absolute;
+                top: 57%;
+                left: 4.5%;
+                width: 91%;
+                height: 27%;
+                display: flex;
+                border: 1px solid #111;
+                border-radius: 6px;
+                background: #fcfcfc;
+                overflow: hidden;
+            }
+            .levels {
+                width: 25%;
+                border-right: 1px solid #111;
+                padding: 10px 8px;
+                font-size: 12px;
+                font-weight: 800;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .lv {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .effects {
+                width: 75%;
+                padding: 10px;
+                font-size: 12px;
+                line-height: 1.5;
+                overflow: hidden;
+            }
+            .eff {
+                margin-bottom: 8px;
+            }
+            .eff .bold-part {
+                font-weight: 800;
+            }
+
+            .plugin {
+                position: absolute;
+                top: 85.5%;
+                bottom: 0;
+                left: 4.5%;
+                width: 91%;
+                display: flex;
+                border: 2px solid #111;
+                border-bottom: none;
+                border-radius: 6px 6px 0 0;
+                background: #f4f4f4;
+                overflow: hidden;
+            }
+            .plugin-source {
+                width: 16%;
+                background: rgba(0, 0, 0, 0.08);
+                border-right: 2px solid #111;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: 800;
+                letter-spacing: 2px;
+                writing-mode: vertical-rl;
+            }
+            .plugin-content {
+                width: 84%;
+                padding: 10px;
+                font-size: 12px;
+                line-height: 1.5;
+                overflow: hidden;
+            }
+
+            .sidebar {
+                position: absolute;
+                right: 0;
+                top: 0;
+                height: 100%;
+                width: 4.5%;
+                border-left: 1px solid rgba(0, 0, 0, 0.15);
+                background: #fafafa;
+                writing-mode: vertical-rl;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 5% 0;
+                font-size: 8px;
+                font-family: sans-serif;
+                letter-spacing: 1px;
+                color: #888;
+                z-index: 10;
+            }
+            .sidebar span {
+                display: block;
+            }
+
+            /* 悬浮编辑笔（还原图2的FAB） */
+            .fab {
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background: #fff;
+                color: #111;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 24px;
+                z-index: 50;
+                cursor: pointer;
+            }
+            body.drawer-open .fab {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            /* ================= 3. Drawers (抽屉) ================= */
+            .drawer {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                width: 85vw;
+                max-width: 350px;
+                background: #fff;
+                z-index: 100;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            }
+            .drawer-left {
+                left: 0;
+                transform: translateX(-100%);
+            }
+            .drawer-right {
+                right: 0;
+                transform: translateX(100%);
+            }
+            .drawer.open {
+                transform: translateX(0);
+            }
+            .overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 90;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s;
+            }
+            .overlay.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            /* --- FileManager (左抽屉) --- */
+            .file-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px;
+                border-bottom: 1px solid #eee;
+                background: #fafafa;
+            }
+            .file-header .menu-btn {
+                font-size: 24px;
+                font-weight: bold;
+                padding: 0 10px;
+                cursor: pointer;
+            }
+            .tabs {
+                display: flex;
+                background: #fff;
+                border-bottom: 1px solid #eee;
+            }
+            .tab {
+                flex: 1;
+                text-align: center;
+                padding: 14px 0;
+                font-size: 14px;
+                font-weight: bold;
+                color: #888;
+                cursor: pointer;
+                border-bottom: 2px solid transparent;
+            }
+            .tab.active {
+                color: #111;
+                border-bottom-color: #111;
+            }
+            .toolbar {
+                padding: 12px 15px;
+                display: flex;
+                align-items: center;
+                font-size: 13px;
+                color: #555;
+                border-bottom: 1px solid #eee;
+                background: #fafafa;
+                cursor: pointer;
+            }
+            .tree-container {
+                flex: 1;
+                overflow-y: auto;
+                padding: 10px 0;
+                background: #fff;
+            }
+            .tree-node {
+                display: flex;
+                align-items: center;
+                padding: 14px 15px;
+                font-size: 15px;
+                cursor: pointer;
+                user-select: none;
+                border-bottom: 1px solid #f9f9f9;
+            }
+            .tree-node.selected {
+                background: #e3f2fd;
+            }
+            .indent-0 {
+                padding-left: 15px;
+            }
+            .indent-1 {
+                padding-left: 35px;
+            }
+            .node-icon {
+                margin-right: 10px;
+                font-size: 16px;
+                color: #555;
+                font-family: monospace;
+            }
+
+            /* --- FormEditor (右抽屉) --- */
+            .form-body {
+                padding: 20px;
+                overflow-y: auto;
+                flex: 1;
+            }
+            .form-group {
+                margin-bottom: 20px;
+            }
+            .form-group label {
+                display: block;
+                font-size: 13px;
+                color: #666;
+                margin-bottom: 8px;
+                font-weight: bold;
+            }
+            .form-group input,
+            .form-group textarea {
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                font-size: 16px;
+                font-family: inherit;
+                background: #f9f9f9;
+            }
+
+            /* 气泡菜单 */
+            .context-menu {
+                position: absolute;
+                right: 15px;
+                top: 55px;
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                width: 180px;
+                padding: 8px 0;
+                z-index: 200;
+                display: none;
+                border: 1px solid #eee;
+            }
+            .context-menu.show {
+                display: block;
+            }
+            .menu-item {
+                padding: 14px 20px;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                color: #333;
+            }
+            .menu-item.danger {
+                color: #d32f2f;
+            }
+            .menu-item .menu-icon {
+                margin-right: 12px;
+                font-size: 14px;
+                font-family: monospace;
+                width: 16px;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- TopBar 组件 -->
+        <div class="top-bar">
+            <div class="icon-btn" onclick="openDrawer('left')">&#9776;</div>
+            <div class="title-text" id="top-title">例子怪兽.json</div>
+            <div class="right-tools">
+                <div class="icon-btn">&#8630;</div>
+                <div class="icon-btn" onclick="alert('已保存到虚拟空间')">
+                    &#128190;
+                </div>
+                <div class="icon-btn" onclick="alert('导出')">&#11123;</div>
+                <div class="icon-btn">&#8942;</div>
+            </div>
+        </div>
+
+        <!-- Stage 组件 (包含完整的 CardCanvas) -->
+        <div class="stage">
+            <div class="card" id="cardPreview">
+                <div class="name">
+                    <div
+                        class="title"
+                        id="card-name"
+                        contenteditable="true"
+                        data-key="name"
+                    >
+                        例子怪兽
+                    </div>
+                    <div class="cost">
+                        费用
+                        <span
+                            id="card-cost"
+                            contenteditable="true"
+                            data-key="cost"
+                            >3</span
+                        >
+                    </div>
+                </div>
+
+                <div class="art">
+                    <span id="art-placeholder">点击上传卡图</span>
+                    <img id="card-img" src="" alt="卡图" />
+                </div>
+
+                <div class="stats">
+                    <span
+                        >速度
+                        <b
+                            id="card-speed"
+                            contenteditable="true"
+                            data-key="speed"
+                            >2</b
+                        ></span
+                    >
+                    <span
+                        >生命
+                        <b id="card-life" contenteditable="true" data-key="life"
+                            >6</b
+                        ></span
+                    >
+                    <span
+                        >阶级
+                        <b id="card-rank" contenteditable="true" data-key="rank"
+                            >3</b
+                        ></span
+                    >
+                </div>
+
+                <div class="mid">
+                    <div class="levels">
+                        <div class="lv">
+                            <span>lv1</span
+                            ><span contenteditable="true" data-key="lv1"
+                                >1-1000</span
+                            >
+                        </div>
+                        <div class="lv">
+                            <span>lv2</span
+                            ><span contenteditable="true" data-key="lv2"
+                                >2-3000</span
+                            >
+                        </div>
+                        <div class="lv">
+                            <span>lv3</span
+                            ><span contenteditable="true" data-key="lv3"
+                                >5-4000</span
+                            >
+                        </div>
+                    </div>
+                    <div
+                        class="effects"
+                        id="card-effects"
+                        contenteditable="true"
+                        data-key="effects"
+                    >
+                        <div class="eff">
+                            <span class="bold-part">「lv2-lv3」「咆哮」</span
+                            >（攻击时发动）这张卡的力量上升2000。
+                        </div>
+                        <div class="eff">
+                            <span class="bold-part">「lv1」「战吼」</span
+                            >（召唤成功时发动）抽1张卡，丢弃1张手卡。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="plugin">
+                    <div class="plugin-source">插件效果</div>
+                    <div
+                        class="plugin-content"
+                        id="card-plugin"
+                        contenteditable="true"
+                        data-key="plugin"
+                    >
+                        <div class="eff">
+                            <span class="bold-part">「lv1」「暴风：1」</span
+                            >（攻击造成伤害时）再造成指定数额的伤害。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <span>NO.001</span><span>R</span><span>© 2026</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAB -->
+        <div class="fab" onclick="openDrawer('right')">✎</div>
+
+        <div class="overlay" id="overlay" onclick="closeDrawers()"></div>
+
+        <!-- FileManager 组件 (左抽屉) -->
+        <div
+            class="drawer drawer-left"
+            id="drawerLeft"
+            style="position: relative"
+        >
+            <div class="file-header">
+                <div style="font-weight: bold; font-size: 16px">文件管理器</div>
+                <div class="menu-btn" onclick="toggleContextMenu(event)">
+                    &#8942;
+                </div>
+                <div class="context-menu" id="contextMenu"></div>
+            </div>
+            <div class="tabs">
+                <div class="tab" id="tab-local" onclick="switchTab('local')">
+                    本地文件
+                </div>
+                <div
+                    class="tab active"
+                    id="tab-virtual"
+                    onclick="switchTab('virtual')"
+                >
+                    虚拟文件
+                </div>
+            </div>
+            <div
+                class="toolbar"
+                id="toolbar"
+                style="display: none"
+                onclick="alert('刷新')"
+            >
+                <span style="margin-right: 8px">&#8635;</span> 刷新目录
+            </div>
+            <div class="tree-container" id="treeContainer"></div>
+        </div>
+
+        <!-- FormEditor 组件 (右抽屉) -->
+        <div class="drawer drawer-right" id="drawerRight">
+            <div class="file-header">
+                <div style="font-weight: bold; font-size: 16px">表单编辑</div>
+                <div class="menu-btn" onclick="closeDrawers()">&#10005;</div>
+            </div>
+            <div class="form-body">
+                <div class="form-group">
+                    <label>卡名</label>
+                    <input type="text" id="form-name" value="例子怪兽" />
+                </div>
+                <div class="form-group">
+                    <label>效果文本</label>
+                    <textarea id="form-effects" rows="5">
+「lv2-lv3」「咆哮」（攻击时发动）这张卡的力量上升2000。
+「lv1」「战吼」（召唤成功时发动）抽1张卡，丢弃1张手卡。</textarea>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // ================= 基础交互 =================
+            function openDrawer(side) {
+                closeDrawers();
+                document.body.classList.add("drawer-open");
+                document.getElementById("overlay").classList.add("open");
+                if (side === "left")
+                    document.getElementById("drawerLeft").classList.add("open");
+                if (side === "right")
+                    document
+                        .getElementById("drawerRight")
+                        .classList.add("open");
+            }
+
+            function closeDrawers() {
+                document.body.classList.remove("drawer-open");
+                document.getElementById("overlay").classList.remove("open");
+                document.getElementById("drawerLeft").classList.remove("open");
+                document.getElementById("drawerRight").classList.remove("open");
+                hideContextMenu();
+            }
+
+            // ================= 文件树逻辑 =================
+            const mockData = {
+                local: [
+                    { id: "l1", type: "folder", name: "终端生成", depth: 0 },
+                    { id: "l2", type: "file", name: "bulk.json", depth: 1 },
+                ],
+                virtual: [
+                    { id: "v1", type: "folder", name: "我的卡组", depth: 0 },
+                    { id: "v2", type: "file", name: "例子怪兽.json", depth: 1 },
+                ],
+            };
+            let currentTab = "virtual";
+            let selectedItem = null;
+
+            function renderTree() {
+                const container = document.getElementById("treeContainer");
+                container.innerHTML = "";
+                mockData[currentTab].forEach((node) => {
+                    const div = document.createElement("div");
+                    div.className = `tree-node indent-${node.depth}`;
+                    if (selectedItem && selectedItem.id === node.id)
+                        div.classList.add("selected");
+                    div.onclick = (e) => {
+                        e.stopPropagation();
+                        selectedItem =
+                            selectedItem && selectedItem.id === node.id
+                                ? null
+                                : node;
+                        renderTree();
+                        hideContextMenu();
+                    };
+                    const icon =
+                        node.type === "folder" ? "&#128193;" : "&#128196;";
+                    div.innerHTML = `<span class="node-icon">${icon}</span><span>${node.name}</span>`;
+                    container.appendChild(div);
+                });
+            }
+
+            function switchTab(tab) {
+                currentTab = tab;
+                selectedItem = null;
+                hideContextMenu();
+                document
+                    .getElementById("tab-local")
+                    .classList.toggle("active", tab === "local");
+                document
+                    .getElementById("tab-virtual")
+                    .classList.toggle("active", tab === "virtual");
+                document.getElementById("toolbar").style.display =
+                    tab === "local" ? "flex" : "none";
+                renderTree();
+            }
+
+            // 上下文菜单
+            function toggleContextMenu(e) {
+                e.stopPropagation();
+                const menu = document.getElementById("contextMenu");
+                if (menu.classList.contains("show")) return hideContextMenu();
+
+                menu.innerHTML = "";
+                const items = getMenuItems();
+                items.forEach((item) => {
+                    const div = document.createElement("div");
+                    div.className = `menu-item ${item.danger ? "danger" : ""}`;
+                    div.innerHTML = `<span class="menu-icon">${item.icon}</span> ${item.label}`;
+                    div.onclick = () => {
+                        alert(`执行：${item.label}`);
+                        hideContextMenu();
+                    };
+                    menu.appendChild(div);
+                });
+                menu.classList.add("show");
+            }
+            function hideContextMenu() {
+                document.getElementById("contextMenu").classList.remove("show");
+            }
+            function getMenuItems() {
+                if (!selectedItem)
+                    return [
+                        { icon: "&#8681;", label: "导入数据" },
+                        { icon: "&#128230;", label: "打包导出" },
+                    ];
+                if (selectedItem.type === "folder")
+                    return [
+                        { icon: "&#43;", label: "新建" },
+                        { icon: "&#10005;", label: "删除", danger: true },
+                    ];
+                return [
+                    { icon: "&#11123;", label: "导出图片" },
+                    { icon: "&#128465;", label: "删除", danger: true },
+                ];
+            }
+            document.addEventListener("click", hideContextMenu);
+
+            // ================= 数据绑定 (卡面 & 表单) =================
+            document.querySelectorAll(".card [data-key]").forEach((el) => {
+                el.addEventListener("input", (e) => {
+                    const key = e.target.dataset.key;
+                    const formEl = document.getElementById(`form-${key}`);
+                    if (formEl) formEl.value = e.target.innerText;
+                });
+            });
+            document
+                .getElementById("form-name")
+                .addEventListener("input", (e) => {
+                    document.getElementById("card-name").innerText =
+                        e.target.value;
+                });
+            document
+                .getElementById("form-effects")
+                .addEventListener("input", (e) => {
+                    // 简单演示：表单修改直接刷新文字
+                    document.getElementById("card-effects").innerText =
+                        e.target.value;
+                });
+
+            // ================= 初始化 =================
+            renderTree();
+            // 自动适应屏幕缩放
+            function fitCard() {
+                const card = document.getElementById("cardPreview");
+                const scaleX = (window.innerWidth - 30) / 354;
+                const scaleY = (window.innerHeight - 100) / 516;
+                card.style.transform = `scale(${Math.min(scaleX, scaleY, 1)})`;
+            }
+            window.addEventListener("resize", fitCard);
+            fitCard();
+        </script>
+    </body>
+</html>

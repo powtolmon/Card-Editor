@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+        />
+        <title>Card Editor - 完整版</title>
+        <!-- 引入 html2canvas 用于导出图片 -->
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+        <style>
+            /* ================= 基础重置 ================= */
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+                -webkit-tap-highlight-color: transparent;
+            }
+            body {
+                background: #222;
+                font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+                color: #111;
+                overflow: hidden;
+                height: 100vh;
+            }
+
+            /* ================= 主舞台与卡面 ================= */
+            .stage {
+                width: 100vw;
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            body.drawer-open .stage {
+                transform: scale(0.95);
+                opacity: 0.6;
+            }
+
+            .card {
+                width: 354px;
+                height: 516px;
+                background: #fff;
+                border-radius: 6px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+                position: relative;
+                transform-origin: center center;
+                user-select: none;
+                /* 截图时去掉阴影，保持卡面干净 */
+                overflow: hidden;
+            }
+
+            /* 可编辑区域的视觉反馈 */
+            [contenteditable="true"] {
+                outline: none;
+                cursor: text;
+                transition: background 0.2s;
+                border-radius: 4px;
+            }
+            [contenteditable="true"]:focus {
+                background: rgba(0, 0, 0, 0.06);
+                box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+            }
+
+            .name {
+                position: absolute;
+                top: 0;
+                left: 4.5%;
+                width: 91%;
+                height: 8%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid #111;
+                padding: 0 2%;
+                font-weight: 800;
+                font-size: 21px;
+            }
+            .name .title {
+                max-width: 75%;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+
+            /* 卡图区域 */
+            .art {
+                position: absolute;
+                top: 8%;
+                left: 4.5%;
+                width: 91%;
+                height: 40%;
+                background: #f5f5f5;
+                border-bottom: 1px solid #111;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                overflow: hidden;
+            }
+            .art img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: none;
+            }
+            .art span {
+                color: #aaa;
+                font-size: 14px;
+                position: absolute;
+                z-index: 1;
+            }
+
+            .stats {
+                position: absolute;
+                top: 49.5%;
+                left: 4.5%;
+                width: 91%;
+                height: 6%;
+                display: flex;
+                justify-content: space-evenly;
+                align-items: center;
+                border: 1px solid #111;
+                border-radius: 6px;
+                background: #fcfcfc;
+                font-size: 13px;
+                color: #555;
+            }
+            .stats b {
+                font-size: 20px;
+                color: #111;
+                font-family: "Arial Black", sans-serif;
+                margin-left: 4px;
+            }
+
+            .mid {
+                position: absolute;
+                top: 57%;
+                left: 4.5%;
+                width: 91%;
+                height: 27%;
+                display: flex;
+                border: 1px solid #111;
+                border-radius: 6px;
+                background: #fcfcfc;
+                overflow: hidden;
+            }
+            .levels {
+                width: 25%;
+                border-right: 1px solid #111;
+                padding: 10px 8px;
+                font-size: 12px;
+                font-weight: 800;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .lv {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .effects {
+                width: 75%;
+                padding: 10px;
+                font-size: 12px;
+                line-height: 1.5;
+                overflow: hidden;
+            }
+            .eff {
+                margin-bottom: 8px;
+            }
+            .eff .bold-part {
+                font-weight: 800;
+            }
+
+            .plugin {
+                position: absolute;
+                top: 85.5%;
+                bottom: 0;
+                left: 4.5%;
+                width: 91%;
+                display: flex;
+                border: 2px solid #111;
+                border-bottom: none;
+                border-radius: 6px 6px 0 0;
+                background: #f4f4f4;
+                overflow: hidden;
+            }
+            .plugin-source {
+                width: 16%;
+                background: rgba(0, 0, 0, 0.08);
+                border-right: 2px solid #111;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: 800;
+                letter-spacing: 2px;
+                writing-mode: vertical-rl;
+            }
+            .plugin-content {
+                width: 84%;
+                padding: 10px;
+                font-size: 12px;
+                line-height: 1.5;
+                overflow: hidden;
+            }
+
+            .sidebar {
+                position: absolute;
+                right: 0;
+                top: 0;
+                height: 100%;
+                width: 4.5%;
+                border-left: 1px solid rgba(0, 0, 0, 0.15);
+                background: #fafafa;
+                writing-mode: vertical-rl;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 5% 0;
+                font-size: 8px;
+                font-family: sans-serif;
+                letter-spacing: 1px;
+                color: #888;
+                z-index: 10;
+            }
+            .sidebar span {
+                display: block;
+            }
+
+            /* ================= 悬浮呼出按钮 ================= */
+            .fab {
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background: #fff;
+                color: #111;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 24px;
+                z-index: 50;
+                cursor: pointer;
+            }
+
+            /* ================= 抽屉与 UI ================= */
+            .drawer {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                width: 85vw;
+                max-width: 350px;
+                background: #fff;
+                z-index: 100;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            }
+            .drawer-left {
+                left: 0;
+                transform: translateX(-100%);
+                border-right: 1px solid #eee;
+            }
+            .drawer-right {
+                right: 0;
+                transform: translateX(100%);
+                border-left: 1px solid #eee;
+            }
+            .drawer.open {
+                transform: translateX(0);
+            }
+
+            .drawer-header {
+                padding: 20px;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-weight: bold;
+                font-size: 18px;
+                background: #fafafa;
+            }
+            .drawer-body {
+                padding: 20px;
+                overflow-y: auto;
+                flex: 1;
+            }
+
+            .overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 90;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s;
+            }
+            .overlay.open {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            /* 表单样式 */
+            .form-group {
+                margin-bottom: 20px;
+            }
+            .form-group label {
+                display: block;
+                font-size: 13px;
+                color: #666;
+                margin-bottom: 8px;
+                font-weight: bold;
+            }
+            .form-group input,
+            .form-group textarea {
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                font-size: 16px;
+                font-family: inherit;
+                background: #f9f9f9;
+                transition: all 0.2s;
+            }
+
+            /* 按钮通用样式 */
+            .btn {
+                width: 100%;
+                padding: 15px;
+                border-radius: 8px;
+                font-weight: bold;
+                font-size: 15px;
+                border: none;
+                margin-bottom: 12px;
+                cursor: pointer;
+                transition: opacity 0.2s;
+            }
+            .btn:active {
+                opacity: 0.7;
+            }
+            .btn-primary {
+                background: #111;
+                color: #fff;
+            }
+            .btn-secondary {
+                background: #f0f0f0;
+                border: 1px solid #ddd;
+                color: #111;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- 隐藏的文件上传 input -->
+        <input
+            type="file"
+            id="imageUploader"
+            accept="image/*"
+            style="display: none"
+        />
+
+        <!-- 主画布区 -->
+        <div class="stage">
+            <div class="card" id="cardPreview">
+                <div class="name">
+                    <div
+                        class="title"
+                        id="card-name"
+                        contenteditable="true"
+                        data-key="name"
+                    ></div>
+                    <div class="cost">
+                        费用
+                        <span
+                            id="card-cost"
+                            contenteditable="true"
+                            data-key="cost"
+                        ></span>
+                    </div>
+                </div>
+
+                <!-- 卡图区域点击触发上传 -->
+                <div
+                    class="art"
+                    onclick="document.getElementById('imageUploader').click()"
+                >
+                    <span id="art-placeholder">点击上传卡图</span>
+                    <img id="card-img" src="" alt="卡图" />
+                </div>
+
+                <div class="stats">
+                    <span
+                        >速度
+                        <b
+                            id="card-speed"
+                            contenteditable="true"
+                            data-key="speed"
+                        ></b
+                    ></span>
+                    <span
+                        >生命
+                        <b
+                            id="card-life"
+                            contenteditable="true"
+                            data-key="life"
+                        ></b
+                    ></span>
+                    <span
+                        >阶级
+                        <b
+                            id="card-rank"
+                            contenteditable="true"
+                            data-key="rank"
+                        ></b
+                    ></span>
+                </div>
+
+                <div class="mid">
+                    <div class="levels">
+                        <div class="lv">
+                            <span>lv1</span
+                            ><span
+                                id="card-lv1"
+                                contenteditable="true"
+                                data-key="lv1"
+                            ></span>
+                        </div>
+                        <div class="lv">
+                            <span>lv2</span
+                            ><span
+                                id="card-lv2"
+                                contenteditable="true"
+                                data-key="lv2"
+                            ></span>
+                        </div>
+                        <div class="lv">
+                            <span>lv3</span
+                            ><span
+                                id="card-lv3"
+                                contenteditable="true"
+                                data-key="lv3"
+                            ></span>
+                        </div>
+                    </div>
+                    <div
+                        class="effects"
+                        id="card-effects"
+                        contenteditable="true"
+                        data-key="effects"
+                    ></div>
+                </div>
+
+                <!-- 插件效果 -->
+                <div class="plugin">
+                    <div class="plugin-source">插件效果</div>
+                    <div
+                        class="plugin-content"
+                        id="card-plugin"
+                        contenteditable="true"
+                        data-key="plugin"
+                    ></div>
+                </div>
+
+                <!-- 👇 把这一段加回来 👇 -->
+                <div class="sidebar">
+                    <span>NO.001</span>
+                    <span>R</span>
+                    <span>© 2026</span>
+                </div>
+                <!-- 👆 把这一段加回来 👆 -->
+            </div>
+        </div>
+
+        <!-- 悬浮呼出按钮 -->
+        <div class="fab" onclick="openDrawer('right')">✎</div>
+
+        <div class="overlay" id="overlay" onclick="closeDrawers()"></div>
+
+        <!-- 左侧抽屉：功能 -->
+        <div class="drawer drawer-left" id="drawerLeft">
+            <div class="drawer-header">
+                <span>导出与数据</span>
+                <button
+                    style="background: none; border: none; font-size: 24px"
+                    onclick="closeDrawers()"
+                >
+                    ×
+                </button>
+            </div>
+            <div class="drawer-body">
+                <button class="btn btn-primary" onclick="exportPng()">
+                    下载当前卡图 (PNG)
+                </button>
+
+                <hr
+                    style="
+                        border: none;
+                        border-top: 1px solid #eee;
+                        margin: 20px 0;
+                    "
+                />
+
+                <button class="btn btn-secondary" onclick="exportJson()">
+                    导出当前数据 (JSON)
+                </button>
+
+                <!-- 导入数据按钮触发隐藏的 input -->
+                <button
+                    class="btn btn-secondary"
+                    onclick="document.getElementById('jsonUploader').click()"
+                >
+                    导入数据 (JSON)
+                </button>
+                <input
+                    type="file"
+                    id="jsonUploader"
+                    accept=".json"
+                    style="display: none"
+                />
+            </div>
+        </div>
+
+        <!-- 右侧抽屉：表单 -->
+        <div class="drawer drawer-right" id="drawerRight">
+            <div class="drawer-header">
+                <span>表单编辑</span>
+                <button
+                    style="background: none; border: none; font-size: 24px"
+                    onclick="closeDrawers()"
+                >
+                    ×
+                </button>
+            </div>
+            <div class="drawer-body">
+                <div class="form-group">
+                    <label>卡名 / 费用</label>
+                    <div style="display: flex; gap: 10px">
+                        <input type="text" data-key="name" style="flex: 2" />
+                        <input type="number" data-key="cost" style="flex: 1" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>速度 / 生命 / 阶级</label>
+                    <div style="display: flex; gap: 10px">
+                        <input
+                            type="number"
+                            data-key="speed"
+                            placeholder="速"
+                        />
+                        <input type="number" data-key="life" placeholder="命" />
+                        <input type="number" data-key="rank" placeholder="阶" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>等级表</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px">
+                        <span
+                            style="
+                                padding-top: 10px;
+                                font-weight: bold;
+                                font-size: 12px;
+                            "
+                            >lv1</span
+                        >
+                        <input type="text" data-key="lv1" style="flex: 1" />
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px">
+                        <span
+                            style="
+                                padding-top: 10px;
+                                font-weight: bold;
+                                font-size: 12px;
+                            "
+                            >lv2</span
+                        >
+                        <input type="text" data-key="lv2" style="flex: 1" />
+                    </div>
+                    <div style="display: flex; gap: 10px">
+                        <span
+                            style="
+                                padding-top: 10px;
+                                font-weight: bold;
+                                font-size: 12px;
+                            "
+                            >lv3</span
+                        >
+                        <input type="text" data-key="lv3" style="flex: 1" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>怪兽效果</label>
+                    <textarea data-key="effects" rows="5"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>插件效果</label>
+                    <textarea data-key="plugin" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // ================= 1. 统一数据源 =================
+            let cardData = {
+                name: "例子怪兽",
+                cost: "3",
+                speed: "2",
+                life: "6",
+                rank: "3",
+                lv1: "1-1000",
+                lv2: "2-3000",
+                lv3: "5-4000",
+                effects:
+                    "「lv2-lv3」「咆哮」（攻击时发动）这张卡的力量上升2000。\n「lv1」「战吼」（召唤成功时发动）抽1张卡，丢弃1张手卡。",
+                plugin: "「lv1」「暴风：1」（攻击造成伤害时）再造成指定数额的伤害。",
+                image: "", // 存图片的 base64 数据
+            };
+
+            // 文本解析器
+            function parseEffectText(text) {
+                if (!text) return "";
+                return text
+                    .split("\n")
+                    .filter((line) => line.trim() !== "")
+                    .map((line) => {
+                        let cleanLine = line.replace(/<[^>]+>/g, "");
+                        let formatted = cleanLine.replace(
+                            /(「[^」]+」|（[^）]+）)/g,
+                            '<span class="bold-part">$1</span>',
+                        );
+                        return `<div class="eff">${formatted}</div>`;
+                    })
+                    .join("");
+            }
+
+            // ================= 2. 初始化 UI =================
+            function updateUI() {
+                // 更新表单
+                document
+                    .querySelectorAll(".drawer-right [data-key]")
+                    .forEach((el) => {
+                        el.value = cardData[el.dataset.key] || "";
+                    });
+                // 更新卡面
+                document.querySelectorAll(".card [data-key]").forEach((el) => {
+                    const key = el.dataset.key;
+                    if (key === "effects" || key === "plugin") {
+                        el.innerHTML = parseEffectText(cardData[key]);
+                    } else {
+                        el.innerText = cardData[key] || "";
+                    }
+                });
+                // 更新图片
+                const imgEl = document.getElementById("card-img");
+                const placeholder = document.getElementById("art-placeholder");
+                if (cardData.image) {
+                    imgEl.src = cardData.image;
+                    imgEl.style.display = "block";
+                    placeholder.style.display = "none";
+                } else {
+                    imgEl.style.display = "none";
+                    placeholder.style.display = "block";
+                }
+            }
+            updateUI();
+
+            // ================= 3. 双向绑定 =================
+
+            // 表单 -> 卡面
+            document
+                .querySelectorAll(".drawer-right [data-key]")
+                .forEach((input) => {
+                    input.addEventListener("input", (e) => {
+                        const key = e.target.dataset.key;
+                        cardData[key] = e.target.value;
+                        const cardEl = document.querySelector(
+                            `.card [data-key="${key}"]`,
+                        );
+                        if (cardEl) {
+                            if (key === "effects" || key === "plugin")
+                                cardEl.innerHTML = parseEffectText(
+                                    cardData[key],
+                                );
+                            else cardEl.innerText = cardData[key];
+                        }
+                    });
+                });
+
+            // 卡面 -> 表单
+            document.querySelectorAll(".card [data-key]").forEach((cardEl) => {
+                cardEl.addEventListener("input", (e) => {
+                    const key = e.target.dataset.key;
+                    cardData[key] = e.target.innerText;
+                    const formEl = document.querySelector(
+                        `.drawer-right [data-key="${key}"]`,
+                    );
+                    if (formEl) formEl.value = cardData[key];
+                });
+                if (
+                    cardEl.dataset.key === "effects" ||
+                    cardEl.dataset.key === "plugin"
+                ) {
+                    cardEl.addEventListener("blur", (e) => {
+                        e.target.innerHTML = parseEffectText(
+                            cardData[e.target.dataset.key],
+                        );
+                    });
+                }
+            });
+
+            // ================= 4. 图片上传逻辑 =================
+            document
+                .getElementById("imageUploader")
+                .addEventListener("change", function (e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        cardData.image = event.target.result; // 将图片转为 base64 存入数据
+                        updateUI();
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+            // ================= 5. 导出数据与图片 =================
+
+            // 导出 JSON
+            function exportJson() {
+                const dataStr =
+                    "data:text/json;charset=utf-8," +
+                    encodeURIComponent(JSON.stringify(cardData, null, 2));
+                const downloadAnchor = document.createElement("a");
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute(
+                    "download",
+                    `${cardData.name || "card"}.json`,
+                );
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            }
+
+            // 导入 JSON
+            document
+                .getElementById("jsonUploader")
+                .addEventListener("change", function (e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        try {
+                            const importedData = JSON.parse(
+                                event.target.result,
+                            );
+                            cardData = { ...cardData, ...importedData }; // 合并数据，防止缺失字段报错
+                            updateUI();
+                            closeDrawers();
+                        } catch (err) {
+                            alert("导入失败，文件格式不正确");
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+
+            // 导出 PNG (使用 html2canvas)
+            function exportPng() {
+                const cardEl = document.getElementById("cardPreview");
+
+                // 截图前，临时关闭缩放和阴影，并隐藏输入焦点光晕
+                const originalTransform = cardEl.style.transform;
+                const originalBoxShadow = cardEl.style.boxShadow;
+                cardEl.style.transform = "none";
+                cardEl.style.boxShadow = "none";
+
+                // 如果当前有激活的输入框，让它失焦，消除光标
+                if (document.activeElement) document.activeElement.blur();
+
+                // 给个友好的提示
+                alert("正在生成图片，请稍候...");
+
+                html2canvas(cardEl, {
+                    scale: 2, // 提高导出分辨率 (相当于 Retina 屏)
+                    backgroundColor: "#ffffff",
+                    useCORS: true,
+                })
+                    .then((canvas) => {
+                        // 恢复样式
+                        cardEl.style.transform = originalTransform;
+                        cardEl.style.boxShadow = originalBoxShadow;
+
+                        // 触发下载
+                        const link = document.createElement("a");
+                        link.download = `${cardData.name || "card"}.png`;
+                        link.href = canvas.toDataURL("image/png");
+                        link.click();
+                    })
+                    .catch((err) => {
+                        alert("图片生成失败，请重试");
+                        cardEl.style.transform = originalTransform;
+                        cardEl.style.boxShadow = originalBoxShadow;
+                    });
+            }
+
+            // ================= 6. 抽屉控制 =================
+            function openDrawer(side) {
+                closeDrawers();
+                document.body.classList.add("drawer-open");
+                document.getElementById("overlay").classList.add("open");
+                if (side === "left")
+                    document.getElementById("drawerLeft").classList.add("open");
+                if (side === "right")
+                    document
+                        .getElementById("drawerRight")
+                        .classList.add("open");
+            }
+
+            function closeDrawers() {
+                document.body.classList.remove("drawer-open");
+                document.getElementById("overlay").classList.remove("open");
+                document.getElementById("drawerLeft").classList.remove("open");
+                document.getElementById("drawerRight").classList.remove("open");
+                // 去除输入高亮
+                document
+                    .querySelectorAll(".highlight")
+                    .forEach((el) => el.classList.remove("highlight"));
+            }
+
+            let touchStartX = 0;
+            document.addEventListener(
+                "touchstart",
+                (e) => {
+                    touchStartX = e.touches[0].clientX;
+                },
+                { passive: true },
+            );
+            document.addEventListener(
+                "touchend",
+                (e) => {
+                    let deltaX = e.changedTouches[0].clientX - touchStartX;
+                    const edgeThreshold = 40;
+                    if (touchStartX < edgeThreshold && deltaX > 60)
+                        openDrawer("left");
+                    else if (
+                        touchStartX > window.innerWidth - edgeThreshold &&
+                        deltaX < -60
+                    )
+                        openDrawer("right");
+                },
+                { passive: true },
+            );
+
+            // 自适应缩放
+            function fitCard() {
+                const card = document.getElementById("cardPreview");
+                const scaleX = (window.innerWidth - 30) / 354;
+                const scaleY = (window.innerHeight - 30) / 516;
+                card.style.transform = `scale(${Math.min(scaleX, scaleY, 1)})`;
+            }
+            window.addEventListener("resize", fitCard);
+            fitCard();
+        </script>
+    </body>
+</html>

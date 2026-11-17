@@ -1,0 +1,185 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+body {
+    background: #222;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #111;
+    /* overflow: hidden; 删掉这一行，或者改成 auto */
+    overflow-y: auto; /* 允许上下滑动 */
+    height: 100%;
+}
+html {
+    height: 100%;
+}
+
+/* 抽屉外壳（负责滑动动画） */
+.drawer {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 85vw;
+    max-width: 350px;
+    background: #fff;
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+.drawer.open {
+    transform: translateX(0) !important;
+}
+
+/* 遮罩层 */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 90;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+.overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ================= 统一 UI 按钮组件 ================= */
+.ui-toolbar {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+.ui-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%; /* 圆形点击反馈 */
+    color: inherit; /* 继承父级颜色 */
+    cursor: pointer;
+    transition: all 0.2s;
+}
+/* 主页面（黑底）：浅灰变纯白 */
+.top-bar .ui-btn {
+    color: #b0b0b0;
+}
+.top-bar .ui-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* 抽屉（白底）：深灰变纯黑 */
+.drawer .ui-btn {
+    color: #555;
+}
+.drawer .ui-btn:active {
+    background: #eee;
+    color: #111;
+}
+
+/* 确保左右挂载点不被挤压，且内部横向排列 */
+#top-left-mount,
+#top-right-mount,
+#left-toolbar-mount {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0; /* 核心：防止被中间标题挤压 */
+}
+
+/* 统一工具栏的横向布局和间距 */
+.ui-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px; /* 按钮之间的微小间隙 */
+}
+
+/* 统一按钮的尺寸和居中 */
+.ui-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+/* 黑底顶栏的按钮颜色反馈 */
+.top-bar .ui-btn {
+    color: #b0b0b0;
+}
+.top-bar .ui-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+/* 白底抽屉的按钮颜色反馈 */
+.drawer .ui-btn {
+    color: #555;
+}
+.drawer .ui-btn:active {
+    background: #eee;
+    color: #111;
+}
+
+/* 旋转动画 */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+.spin-anim {
+    animation: spin 1s linear infinite;
+}
+
+/* ================= 下拉菜单样式 ================= */
+.dropdown-menu {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    min-width: 140px;
+    padding: 6px 0;
+    display: none;
+    flex-direction: column;
+    z-index: 200;
+}
+.dropdown-menu.show {
+    display: flex;
+}
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* 图标和文字的间距 */
+    padding: 12px 16px;
+    color: #eee;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.dropdown-item:active {
+    background: #444;
+}
+.dropdown-item svg {
+    color: #aaa; /* 图标颜色稍微暗一点 */
+}

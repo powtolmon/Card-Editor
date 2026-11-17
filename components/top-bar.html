@@ -1,0 +1,44 @@
+<div class="top-bar">
+    <div id="top-left-mount"></div>
+    <div class="title-container">
+        <div class="title-text" id="top-title">例子怪兽.json</div>
+    </div>
+    <div id="top-right-mount" style="position: relative">
+        <!-- 加上 position: relative 方便下拉菜单定位 -->
+        <!-- 三点菜单将在这里弹出 -->
+        <div class="dropdown-menu" id="top-dropdown"></div>
+    </div>
+</div>
+
+<style>
+    .top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 4px;
+        background: #1a1a1a;
+        border-bottom: 1px solid #333;
+        z-index: 50;
+        color: #fff;
+    }
+    .title-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        overflow: hidden;
+        padding: 0 8px;
+    }
+    .title-text {
+        font-size: 15px;
+        font-weight: 500;
+        color: #eee;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>

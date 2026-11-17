@@ -1,0 +1,124 @@
+<div class="card-wrapper">
+    <div class="card" id="cardPreview">
+        <div class="name">
+            <div class="title" contenteditable="true" data-key="cardName">
+                例子怪兽
+            </div>
+            <div class="cost">
+                费用 <span contenteditable="true" data-key="cost">3</span>
+            </div>
+        </div>
+
+        <!-- 在卡图区域内部修改 -->
+        <div class="art" id="card-art-container">
+            <span id="art-placeholder">点击上传卡图</span>
+            <!-- 🔥 去掉了 object-fit: cover，改用强制拉伸 -->
+            <img
+                id="card-image"
+                src=""
+                style="
+                    display: none;
+                    width: 100%;
+                    height: 100%;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                "
+            />
+            <input
+                type="file"
+                id="imageUploader"
+                accept="image/*"
+                style="display: none"
+            />
+
+            <!-- 加上 data-html2canvas-ignore="true" 后，html2canvas 截图时会自动无视它 -->
+            <div
+                id="stretch-warning"
+                data-html2canvas-ignore="true"
+                style="
+                    display: none;
+                    position: absolute;
+                    bottom: 5px;
+                    right: 5px;
+                    background: rgba(255, 152, 0, 0.9);
+                    color: #fff;
+                    font-size: 10px;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    z-index: 10;
+                    font-weight: bold;
+                "
+            >
+                ⚠️ 已拉伸
+            </div>
+        </div>
+
+        <!-- ... 下面数值、效果区域保持不变 ... -->
+
+        <div class="stats">
+            <span>速度 <b contenteditable="true" data-key="speed">2</b></span>
+            <span>生命 <b contenteditable="true" data-key="life">6</b></span>
+            <span>阶级 <b contenteditable="true" data-key="rank">3</b></span>
+        </div>
+
+        <div class="mid">
+            <div class="levels">
+                <div class="lv">
+                    <span>lv1</span
+                    ><span contenteditable="true" data-key="lv1">1-1000</span>
+                </div>
+                <div class="lv">
+                    <span>lv2</span
+                    ><span contenteditable="true" data-key="lv2">2-3000</span>
+                </div>
+                <div class="lv">
+                    <span>lv3</span
+                    ><span contenteditable="true" data-key="lv3">5-4000</span>
+                </div>
+            </div>
+            <div
+                class="effects"
+                contenteditable="true"
+                data-key="effects"
+                id="card-effects"
+            >
+                <div class="eff">
+                    <span class="bold-part">「lv2-lv3」「咆哮」</span
+                    >（攻击时发动）这张卡的力量上升2000。
+                </div>
+            </div>
+        </div>
+
+        <div class="plugin">
+            <div class="plugin-source">插件效果</div>
+            <div
+                class="plugin-content"
+                contenteditable="true"
+                data-key="plugin"
+                id="card-plugin"
+            >
+                <div class="eff">
+                    <span class="bold-part">「lv1」「暴风：1」</span
+                    >（攻击造成伤害时）再造成指定数额的伤害。
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <span>NO.001</span><span>R</span><span>© 2026</span>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="css/card.css" />
+<style>
+    .card-wrapper {
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 75px;
+        padding-bottom: 50px;
+    }
+</style>

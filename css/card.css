@@ -1,0 +1,180 @@
+.card {
+    width: 354px;
+    height: 516px;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    position: relative;
+    transform-origin: top center; /* 🔥 改为顶部中心缩放 */
+    user-select: none;
+    overflow: hidden;
+    margin-bottom: 20px; /* 留点底部空隙 */
+}
+
+[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+    transition: background 0.2s;
+    border-radius: 4px;
+}
+[contenteditable="true"]:focus {
+    background: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.name {
+    position: absolute;
+    top: 0;
+    left: 4.5%;
+    width: 91%;
+    height: 8%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #111;
+    padding: 0 2%;
+    font-weight: 800;
+    font-size: 21px;
+}
+.name .title {
+    max-width: 75%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.art {
+    position: absolute;
+    top: 8%;
+    left: 4.5%;
+    width: 91%;
+    height: 40%;
+    background: #f5f5f5;
+    border-bottom: 1px solid #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.art span {
+    color: #aaa;
+    font-size: 14px;
+}
+
+.stats {
+    position: absolute;
+    top: 49.5%;
+    left: 4.5%;
+    width: 91%;
+    height: 6%;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    border: 1px solid #111;
+    border-radius: 6px;
+    background: #fcfcfc;
+    font-size: 13px;
+    color: #555;
+}
+.stats b {
+    font-size: 20px;
+    color: #111;
+    font-family: "Arial Black", sans-serif;
+    margin-left: 4px;
+}
+
+.mid {
+    position: absolute;
+    top: 57%;
+    left: 4.5%;
+    width: 91%;
+    height: 27%;
+    display: flex;
+    border: 1px solid #111;
+    border-radius: 6px;
+    background: #fcfcfc;
+    overflow: hidden;
+}
+.levels {
+    width: 25%;
+    border-right: 1px solid #111;
+    padding: 10px 8px;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.lv {
+    display: flex;
+    justify-content: space-between;
+}
+
+.effects {
+    width: 75%;
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow: hidden;
+}
+.eff {
+    margin-bottom: 8px;
+}
+.eff .bold-part {
+    font-weight: 800;
+}
+
+.plugin {
+    position: absolute;
+    top: 85.5%;
+    bottom: 0;
+    left: 4.5%;
+    width: 91%;
+    display: flex;
+    border: 2px solid #111;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    background: #f4f4f4;
+    overflow: hidden;
+}
+.plugin-source {
+    width: 16%;
+    background: rgba(0, 0, 0, 0.08);
+    border-right: 2px solid #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    writing-mode: vertical-rl;
+}
+.plugin-content {
+    width: 84%;
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow: hidden;
+}
+
+.sidebar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 4.5%;
+    border-left: 1px solid rgba(0, 0, 0, 0.15);
+    background: #fafafa;
+    writing-mode: vertical-rl;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5% 0;
+    font-size: 8px;
+    font-family: sans-serif;
+    letter-spacing: 1px;
+    color: #888;
+    z-index: 10;
+}
+.sidebar span {
+    display: block;
+}

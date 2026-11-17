@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width,initial-scale=1,maximum-scale=1"
+        />
+        <title>卡面原型 - 精细打磨版</title>
+        <style>
+            :root {
+                --cw: 354px;
+                --ratio: 86 / 59;
+                --ch: calc(var(--cw) * var(--ratio));
+
+                --h-name: 8%;
+                --h-art: 40%;
+                --h-stats: 6%;
+                --h-gap: 1.5%;
+                --h-mid: 27%;
+
+                --w-level: 25%; /* 稍微放宽一点点，给等级表留足空间 */
+                --w-gap: 4.5%;
+
+                --line: rgba(0, 0, 0, 0.15);
+                --ink: #111111;
+                --paper: #ffffff;
+                --box-bg: #fcfcfc; /* 框底色再白一点，更干净 */
+                --box-border: 1px solid var(--ink);
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            html,
+            body {
+                height: 100%;
+            }
+            body {
+                background: #222;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family:
+                    "PingFang SC", "Microsoft YaHei", "Noto Serif CJK SC",
+                    sans-serif;
+                color: var(--ink);
+            }
+
+            .card {
+                position: relative;
+                width: var(--cw);
+                height: var(--ch);
+                background: var(--paper);
+                border-radius: calc(var(--cw) * 0.02);
+                overflow: hidden;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            }
+
+            .name,
+            .art,
+            .stats,
+            .mid,
+            .plugin {
+                position: absolute;
+                left: var(--w-gap);
+                width: calc(100% - var(--w-gap) * 2);
+            }
+
+            /* 1 身份区 */
+            .name {
+                top: 0;
+                height: var(--h-name);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 2%;
+                font-size: calc(var(--cw) * 0.06);
+                font-weight: 800;
+                border-bottom: var(--box-border);
+            }
+            .name .title {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .name .cost {
+                flex: 0 0 auto;
+                margin-left: 3%;
+                display: flex;
+                align-items: center;
+                gap: 0.25em;
+                font-size: calc(var(--cw) * 0.045);
+            }
+
+            /* 2 卡图 */
+            .art {
+                top: var(--h-name);
+                height: var(--h-art);
+                background: #f5f5f5 center/cover no-repeat;
+                border-bottom: var(--box-border);
+            }
+
+            /* 3 数值行 - 放大数字 */
+            .stats {
+                top: calc(var(--h-name) + var(--h-art) + var(--h-gap));
+                height: var(--h-stats);
+                display: flex;
+                align-items: center;
+                justify-content: space-evenly;
+                font-size: calc(var(--cw) * 0.036);
+                border: var(--box-border);
+                border-radius: 6px;
+                background: var(--box-bg);
+            }
+            .stats span {
+                display: flex;
+                align-items: center;
+                gap: 0.3em;
+                color: #555;
+            }
+            .stats b {
+                font-size: 1.5em; /* 数字放大 */
+                color: var(--ink); /* 数字用纯黑 */
+                font-family:
+                    "Arial Black", sans-serif; /* 用无衬线加粗，更有力量感 */
+            }
+
+            /* 4 中部 */
+            .mid {
+                top: calc(
+                    var(--h-name) + var(--h-art) + var(--h-gap) +
+                        var(--h-stats) + var(--h-gap)
+                );
+                height: var(--h-mid);
+                display: flex;
+                border: var(--box-border);
+                border-radius: 6px;
+                background: var(--box-bg);
+                overflow: hidden;
+            }
+
+            .mid > * {
+                height: 100%;
+                overflow: hidden;
+            }
+
+            /* 等级表 - 两端对齐 */
+            .levels {
+                width: var(--w-level);
+                border-right: var(--box-border);
+                padding: 4% 4%;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                font-size: calc(var(--cw) * 0.03);
+                line-height: 1.5;
+            }
+            .lv {
+                display: flex;
+                justify-content: space-between; /* 让 lv1 和 数值 分别靠左和靠右 */
+                font-weight: 800;
+                white-space: nowrap;
+            }
+
+            .effects {
+                width: calc(100% - var(--w-level));
+                padding: 4% 4%;
+                font-size: calc(var(--cw) * 0.03);
+                line-height: 1.5;
+                overflow: hidden;
+            }
+            .eff {
+                margin-bottom: 0.8em;
+            }
+            .eff:last-child {
+                margin-bottom: 0;
+            }
+
+            /* 统一文本 */
+            .eff .cond,
+            .eff .ename,
+            .eff .param,
+            .eff .trig,
+            .eff .body {
+                display: inline;
+                opacity: 1;
+                font-size: 1em;
+                color: var(--ink);
+                text-align: left; /* 改回左对齐，防止字距被拉大 */
+            }
+
+            .eff .cond,
+            .eff .ename,
+            .eff .param {
+                font-weight: 800;
+            }
+
+            /* 5 插件栏 */
+            .plugin {
+                top: calc(
+                    var(--h-name) + var(--h-art) + var(--h-gap) +
+                        var(--h-stats) + var(--h-gap) + var(--h-mid) +
+                        var(--h-gap)
+                );
+                bottom: 0;
+                display: flex;
+                border: 2px solid var(--ink);
+                border-bottom: none;
+                border-radius: 6px 6px 0 0;
+                background: #f4f4f4;
+                overflow: hidden;
+            }
+
+            .plugin-source {
+                width: 16%;
+                background: rgba(0, 0, 0, 0.08);
+                border-right: 2px solid var(--ink);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .plugin-source span {
+                font-size: calc(var(--cw) * 0.026);
+                font-weight: 800;
+                letter-spacing: 2px;
+                writing-mode: vertical-rl;
+                text-orientation: upright;
+            }
+
+            .plugin-content {
+                width: 84%;
+                padding: 4% 4%;
+                font-size: calc(var(--cw) * 0.03);
+                line-height: 1.5;
+                overflow: hidden;
+            }
+
+            /* 6 右侧栏 - 修复 © 符号 */
+            .sidebar {
+                position: absolute;
+                right: 0;
+                top: 0;
+                height: 100%;
+                width: var(--w-gap);
+                border-left: 1px solid var(--line);
+                background: #fafafa;
+                writing-mode: vertical-rl;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 5% 0;
+                font-size: calc(var(--cw) * 0.022);
+                font-family: sans-serif;
+                letter-spacing: 1px;
+                color: #888;
+                z-index: 10;
+            }
+            .sidebar span {
+                display: block;
+            }
+
+            /* 让英文/数字在竖排中正常显示，不倒立 */
+            .sidebar .num {
+                text-orientation: sideways; /* 侧向排版，英文会横过来 */
+                writing-mode: vertical-rl;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="name">
+                <div class="title">例子怪兽</div>
+                <div class="cost">费用 <b>3</b></div>
+            </div>
+
+            <div class="art" id="art"></div>
+
+            <div class="stats">
+                <span>速度 <b>2</b></span>
+                <span>生命 <b>6</b></span>
+                <span>阶级 <b>3</b></span>
+            </div>
+
+            <div class="mid">
+                <div class="levels">
+                    <!-- 拆分为左右两个 span -->
+                    <div class="lv"><span>lv1</span><span>1-1000</span></div>
+                    <div class="lv"><span>lv2</span><span>2-3000</span></div>
+                    <div class="lv"><span>lv3</span><span>5-4000</span></div>
+                </div>
+                <div class="effects">
+                    <div class="eff">
+                        <span class="cond">「lv2-lv3」</span
+                        ><span class="ename">「咆哮」</span
+                        ><span class="trig">（攻击时发动）</span
+                        ><span class="body">这张卡的力量上升2000。</span>
+                    </div>
+                    <div class="eff">
+                        <span class="cond">「lv1」</span
+                        ><span class="ename">「战吼」</span
+                        ><span class="trig">（召唤成功时发动）</span
+                        ><span class="body">抽1张卡，丢弃1张手卡。</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="plugin">
+                <div class="plugin-source">
+                    <span>插件效果</span>
+                </div>
+                <div class="plugin-content">
+                    <div class="eff">
+                        <span class="cond">「lv1」</span
+                        ><span class="ename">「暴风</span
+                        ><span class="param">：1」</span
+                        ><span class="trig">（攻击造成伤害时）</span
+                        ><span class="body">再造成指定数额的伤害。</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 侧边栏使用 class="num" 修复符号 -->
+            <div class="sidebar">
+                <span class="num">NO.001</span>
+                <span class="num">R</span>
+                <span class="num">© 2026</span>
+            </div>
+        </div>
+
+        <script>
+            function fit() {
+                const max = Math.min(window.innerWidth - 32, 520);
+                document.documentElement.style.setProperty(
+                    "--cw",
+                    Math.min(354, max) + "px",
+                );
+            }
+            fit();
+            window.addEventListener("resize", fit);
+        </script>
+    </body>
+</html>

@@ -1,0 +1,16 @@
+Card-Editor/
+├── index.html                 # 只有最基础的骨架和“坑位”
+│
+├── components/                # 所有的 UI 组件（按你说的拆分）
+│   ├── top-bar.html           # 顶部栏：包含左侧汉堡、右侧工具栏、⋮ 菜单
+│   ├── card-canvas.html       # 卡面：纯白切割线卡牌本体
+│   ├── left-drawer.html       # 左抽屉：文件管理器、Tab、文件树
+│   └── right-drawer.html      # 右抽屉：表单输入框
+│
+├── css/
+│   ├── global.css             # 全局重置、抽屉滑出动画、遮罩层
+│   └── card.css               # 卡面专属的布局（其实也可以塞进 card-canvas.html）
+│
+└── js/
+    ├── loader.js              # 负责用 fetch 把 components 里的 HTML 拼到 index 里
+    └── app.js                 # 负责把这些组件连起来（点击菜单开抽屉、输入框联动等）
